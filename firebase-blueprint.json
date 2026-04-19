@@ -1,0 +1,75 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Stores user profile and current game state",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "stats": {
+          "type": "object",
+          "properties": {
+            "confiance": { "type": "number" },
+            "complicite": { "type": "number" },
+            "pression": { "type": "number" },
+            "naturel": { "type": "number" }
+          }
+        },
+        "lastChoice": { "type": "string" },
+        "checklist": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "label": { "type": "string" },
+              "completed": { "type": "boolean" }
+            }
+          }
+        },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["displayName", "email", "stats"]
+    },
+    "HistoryItem": {
+      "title": "History Item",
+      "description": "A single interaction in the history",
+      "type": "object",
+      "properties": {
+        "message": { "type": "string" },
+        "isUser": { "type": "boolean" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["message", "isUser", "timestamp"]
+    },
+    "Souvenir": {
+      "title": "Souvenir",
+      "description": "An unlocked souvenir",
+      "type": "object",
+      "properties": {
+        "souvenirId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "triggerHint": { "type": "string" },
+        "category": { "type": "string" },
+        "unlockedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["souvenirId", "title", "unlockedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Root collection for users"
+    },
+    "/users/{userId}/history/{messageId}": {
+      "schema": "HistoryItem",
+      "description": "Sub-collection for message history"
+    },
+    "/users/{userId}/souvenirs/{souvenirId}": {
+      "schema": "Souvenir",
+      "description": "Sub-collection for unlocked souvenirs"
+    }
+  }
+}

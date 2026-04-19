@@ -1,0 +1,67 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Helpers
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isVerified() { return request.auth.token.email_verified == true; }
+
+    // Validation Blueprints
+    function isValidUser(data) {
+      return data.keys().hasAll(['displayName', 'email', 'stats', 'updatedAt'])
+        && data.keys().size() <= 10
+        && data.displayName is string && data.displayName.size() <= 100
+        && data.email is string && data.email.size() <= 100
+        && data.email == request.auth.token.email
+        && data.stats.confiance is number && data.stats.confiance >= 0 && data.stats.confiance <= 100
+        && data.stats.complicite is number && data.stats.complicite >= 0 && data.stats.complicite <= 100
+        && data.stats.naturel is number && data.stats.naturel >= 0 && data.stats.naturel <= 100
+        && data.stats.pression is number && data.stats.pression >= 0 && data.stats.pression <= 100
+        && data.updatedAt == request.time;
+    }
+
+    function isValidHistoryItem(data) {
+      return data.keys().hasAll(['message', 'isUser', 'timestamp'])
+        && data.keys().size() == 3
+        && data.message is string && data.message.size() <= 5000
+        && data.isUser is bool
+        && data.timestamp == request.time;
+    }
+
+    function isValidSouvenir(data) {
+      return data.keys().hasAll(['souvenirId', 'title', 'unlockedAt'])
+        && data.keys().size() <= 10
+        && data.souvenirId is string && data.souvenirId.size() <= 64
+        && data.title is string && data.title.size() <= 100
+        && data.unlockedAt == request.time;
+    }
+
+    // Collection Routing
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isVerified() && isValidUser(incoming());
+      allow update: if isOwner(userId) && isVerified() && isValidUser(incoming())
+        && incoming().email == existing().email // Immutable email
+        && incoming().diff(existing()).affectedKeys().hasOnly(['stats', 'lastChoice', 'checklist', 'updatedAt', 'displayName']);
+
+      match /history/{messageId} {
+        allow list: if isOwner(userId); // Explicitly restricted to owner
+        allow create: if isOwner(userId) && isVerified() && isValidId(messageId) && isValidHistoryItem(incoming());
+      }
+
+      match /souvenirs/{souvenirId} {
+        allow list: if isOwner(userId);
+        allow get: if isOwner(userId);
+        allow create: if isOwner(userId) && isVerified() && isValidId(souvenirId) && isValidSouvenir(incoming());
+      }
+    }
+  }
+}
