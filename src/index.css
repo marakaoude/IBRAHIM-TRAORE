@@ -6,3 +6,122 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   --font-handwritten: "Caveat", cursive;
 }
+
+@layer base {
+  :root {
+    --bg-main: #050505;
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.4);
+    --surface-low: rgba(255, 255, 255, 0.05);
+    --surface-mid: rgba(255, 255, 255, 0.1);
+    --border-dim: rgba(255, 255, 255, 0.05);
+    --accent: #fbbf24;
+    --accent-dim: rgba(251, 191, 36, 0.1);
+  }
+
+  [data-theme='light'] {
+    --bg-main: #fcfcfc;
+    --text-primary: #1a1a1a;
+    --text-secondary: rgba(0, 0, 0, 0.5);
+    --surface-low: rgba(0, 0, 0, 0.03);
+    --surface-mid: rgba(0, 0, 0, 0.07);
+    --border-dim: rgba(0, 0, 0, 0.08);
+    --accent: #d97706;
+    --accent-dim: rgba(217, 119, 6, 0.1);
+  }
+}
+
+@utility custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--surface-mid);
+    border-radius: 10px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-dim);
+  }
+}
+
+@utility scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   L'ART DU LIEN - SYSTÈME D'INTERACTION DES ÉLÉMENTS SÉLECTIONNÉS
+   Gère les états : Focus, Actif, Survol et Clic
+   ========================================================================== */
+
+@keyframes subtle-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+.group.active, .group:focus {
+  border: 2px solid #DAA520 !important;
+  outline: none;
+  animation: subtle-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  box-shadow: 0 0 20px rgba(218, 165, 32, 0.2);
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-out, border-color 0.3s ease-out;
+  position: relative;
+  will-change: transform;
+}
+
+@keyframes focus-notify {
+  0% { transform: scale(0) translateY(0); opacity: 0; }
+  20% { transform: scale(1.1) translateY(-8px); opacity: 1; }
+  80% { transform: scale(1) translateY(-8px); opacity: 1; }
+  100% { transform: scale(0.8) translateY(-12px); opacity: 0; }
+}
+
+.group.active::after, .group:focus::after {
+  content: 'Sélectionné';
+  position: absolute;
+  top: -12px;
+  right: 12px;
+  background: #DAA520;
+  color: black;
+  font-size: 8px;
+  font-weight: 900;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+  animation: focus-notify 1.5s ease-out forwards;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  z-index: 50;
+}
+
+.group.active:hover, .group:focus:hover {
+  transform: scale(1.05) !important;
+  box-shadow: 0 10px 25px rgba(218, 165, 32, 0.3), 0 0 15px #DAA520;
+  filter: brightness(1.1);
+  animation-duration: 1s; /* Faster pulse on hover */
+}
+
+@keyframes interaction-ping {
+  0% { transform: scale(1); opacity: 0.8; border-width: 2px; }
+  100% { transform: scale(1.15); opacity: 0; border-width: 1px; }
+}
+
+/* Animation d'ondulation subtile au clic */
+.group.active:active::before, .group:focus:active::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border: 2px solid #DAA520;
+  border-radius: inherit;
+  animation: interaction-ping 0.6s cubic-bezier(0, 0, 0.2, 1) forwards;
+  pointer-events: none;
+}

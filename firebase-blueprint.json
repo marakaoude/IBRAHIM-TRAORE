@@ -56,6 +56,31 @@
         "unlockedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["souvenirId", "title", "unlockedAt"]
+    },
+    "Artwork": {
+      "title": "Artwork",
+      "description": "An image uploaded to the user's gallery",
+      "type": "object",
+      "properties": {
+        "imageUrl": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["imageUrl", "title", "createdAt"]
+    },
+    "JournalEntry": {
+      "title": "Journal Entry",
+      "description": "A logged shared moment",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "momentSnapshot": { "type": "string" },
+        "statsAtTime": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content", "createdAt"]
     }
   },
   "firestore": {
@@ -70,6 +95,14 @@
     "/users/{userId}/souvenirs/{souvenirId}": {
       "schema": "Souvenir",
       "description": "Sub-collection for unlocked souvenirs"
+    },
+    "/users/{userId}/gallery/{artworkId}": {
+      "schema": "Artwork",
+      "description": "Sub-collection for user artwork gallery"
+    },
+    "/users/{userId}/journal/{entryId}": {
+      "schema": "JournalEntry",
+      "description": "Sub-collection for logged shared moments"
     }
   }
 }

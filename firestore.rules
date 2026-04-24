@@ -30,9 +30,11 @@ service cloud.firestore {
 
     function isValidHistoryItem(data) {
       return data.keys().hasAll(['message', 'isUser', 'timestamp'])
-        && data.keys().size() == 3
+        && data.keys().size() <= 5
         && data.message is string && data.message.size() <= 5000
         && data.isUser is bool
+        && (data.get('reaction', '') is string)
+        && (data.get('reactions', []) is list)
         && data.timestamp == request.time;
     }
 
@@ -42,6 +44,24 @@ service cloud.firestore {
         && data.souvenirId is string && data.souvenirId.size() <= 64
         && data.title is string && data.title.size() <= 100
         && data.unlockedAt == request.time;
+    }
+
+    function isValidArtwork(data) {
+      return data.keys().hasAll(['imageUrl', 'title', 'createdAt'])
+        && data.keys().size() <= 6
+        && data.imageUrl is string && data.imageUrl.size() <= 500000 // Allow for large Base64 or long URLs
+        && data.title is string && data.title.size() <= 100
+        && (data.get('description', '') is string && data.get('description', '').size() <= 500)
+        && data.createdAt == request.time;
+    }
+
+    function isValidJournalEntry(data) {
+      return data.keys().hasAll(['title', 'content', 'createdAt'])
+        && data.keys().size() <= 10
+        && data.title is string && data.title.size() <= 200
+        && data.content is string && data.content.size() <= 2000
+        && (data.get('momentSnapshot', '') is string)
+        && data.createdAt == request.time;
     }
 
     // Collection Routing
@@ -55,12 +75,32 @@ service cloud.firestore {
       match /history/{messageId} {
         allow list: if isOwner(userId); // Explicitly restricted to owner
         allow create: if isOwner(userId) && isVerified() && isValidId(messageId) && isValidHistoryItem(incoming());
+        allow update: if isOwner(userId) && isVerified() && isValidHistoryItem(incoming())
+          && (incoming().diff(existing()).affectedKeys().hasOnly(['reaction', 'reactions']));
       }
 
       match /souvenirs/{souvenirId} {
         allow list: if isOwner(userId);
         allow get: if isOwner(userId);
         allow create: if isOwner(userId) && isVerified() && isValidId(souvenirId) && isValidSouvenir(incoming());
+      }
+
+      match /gallery {
+        allow list: if isOwner(userId);
+        match /{artworkId} {
+          allow get: if isOwner(userId);
+          allow create: if isOwner(userId) && isVerified() && isValidId(artworkId) && isValidArtwork(incoming());
+          allow delete: if isOwner(userId);
+        }
+      }
+
+      match /journal {
+        allow list: if isOwner(userId);
+        match /{entryId} {
+          allow get: if isOwner(userId);
+          allow create: if isOwner(userId) && isVerified() && isValidId(entryId) && isValidJournalEntry(incoming());
+          allow delete: if isOwner(userId);
+        }
       }
     }
   }
